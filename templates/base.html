@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ business_name }} — Retail Shop Manager</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+{% if logged_in_user %}
+<header class="topbar">
+  <div class="brand">{{ business_name }}</div>
+  <nav class="tabs">
+    <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' else '' }}">Dashboard</a>
+    <a href="{{ url_for('inventory') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('inventory') else '' }}">Inventory</a>
+    <a href="{{ url_for('sales') }}" class="{{ 'active' if request.endpoint in ['sales', 'sell'] else '' }}">Sales</a>
+    <a href="{{ url_for('reports') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('reports') else '' }}">Reports</a>
+    <a href="{{ url_for('settings_page') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('settings') else '' }}">Settings</a>
+  </nav>
+  <div class="userbox">
+    <span>{{ logged_in_user['username'] }} <em>({{ logged_in_user['role'] }})</em></span>
+    <a href="{{ url_for('logout') }}" class="btn-logout">Log out</a>
+  </div>
+</header>
+{% endif %}
+
+<main class="content">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-stack">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

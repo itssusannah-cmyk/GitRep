@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Sales</h1>
+
+<form method="post" action="{{ url_for('sell') }}" class="sale-form">
+  <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+  <label>Product
+    <select name="product_id" required>
+      <option value="" disabled selected>Choose a product…</option>
+      {% for p in products %}
+      <option value="{{ p['id'] }}">{{ p['name'] }} ({{ p['category'] }}) — {{ p['quantity'] }} in stock — {{ p['selling_price'] | money }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Quantity
+    <input type="number" name="quantity" min="1" value="1" required>
+  </label>
+  <button type="submit" class="btn-primary">Sell</button>
+</form>
+
+<h2>Sales History</h2>
+<div class="table-wrap">
+<table class="data-table">
+  <thead><tr><th>Product</th><th class="num">Qty</th><th class="num">Unit Price</th><th class="num">Total</th><th class="num">Profit</th><th>Date</th></tr></thead>
+  <tbody>
+    {% for s in sales %}
+    <tr>
+      <td>{{ s['product_name'] }}</td>
+      <td class="num">{{ s['quantity'] }}</td>
+      <td class="num">{{ s['sale_price'] | money }}</td>
+      <td class="num">{{ s['total'] | money }}</td>
+      <td class="num">{{ s['profit'] | money }}</td>
+      <td>{{ s['sale_date'] }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="empty-state">No sales recorded yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

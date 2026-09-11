@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Inventory</h1>
+
+<div class="toolbar">
+  <form method="get" class="search-form">
+    <input type="text" name="q" value="{{ search }}" placeholder="Search products or categories…">
+    <button type="submit" class="btn-secondary">Search</button>
+  </form>
+  <a href="{{ url_for('inventory_export_xlsx', q=search) }}" class="btn-secondary">Export to Excel</a>
+</div>
+
+<details class="add-panel">
+  <summary>+ Add Product</summary>
+  <form method="post" action="{{ url_for('inventory_add') }}" class="grid-form">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+    <label>Name<input type="text" name="name" required></label>
+    <label>Category<input type="text" name="category"></label>
+    <label>Cost Price<input type="number" step="0.01" min="0" name="cost_price" required></label>
+    <label>Selling Price<input type="number" step="0.01" min="0" name="selling_price" required></label>
+    <label>Initial Qty<input type="number" min="0" name="quantity" value="0"></label>
+    <label>Reorder Level<input type="number" min="0" name="reorder_level" value="5"></label>
+    <button type="submit" class="btn-primary">Add Product</button>
+  </form>
+</details>
+
+<div class="table-wrap">
+<table class="data-table">
+  <thead>
+    <tr><th>Name</th><th>Category</th><th class="num">Cost</th><th class="num">Price</th><th class="num">Stock</th><th class="num">Reorder</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for p in products %}
+    <tr>
+      <td>{{ p['name'] }}</td>
+      <td>{{ p['category'] }}</td>
+      <td class="num">{{ p['cost_price'] | money }}</td>
+      <td class="num">{{ p['selling_price'] | money }}</td>
+      <td class="num">{{ p['quantity'] }}</td>
+      <td class="num">{{ p['reorder_level'] }}</td>
+      <td class="row-actions">
+        <details>
+          <summary>Edit</summary>
+          <form method="post" action="{{ url_for('inventory_edit', product_id=p['id']) }}" class="grid-form-inline">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+            <input type="text" name="name" value="{{ p['name'] }}" required placeholder="Name">
+            <input type="text" name="category" value="{{ p['category'] }}" placeholder="Category">
+            <input type="number" step="0.01" min="0" name="cost_price" value="{{ p['cost_price'] }}" required placeholder="Cost">
+            <input type="number" step="0.01" min="0" name="selling_price" value="{{ p['selling_price'] }}" required placeholder="Price">
+            <input type="number" min="0" name="reorder_level" value="{{ p['reorder_level'] }}" required placeholder="Reorder lvl">
+            <button type="submit" class="btn-primary btn-sm">Save</button>
+          </form>
+        </details>
+        <details>
+          <summary>Restock</summary>
+          <form method="post" action="{{ url_for('inventory_restock', product_id=p['id']) }}" class="inline-form">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+            <input type="number" name="quantity" min="1" placeholder="Qty" required>
+            <button type="submit" class="btn-primary btn-sm">Add Stock</button>
+          </form>
+        </details>
+        <form method="post" action="{{ url_for('inventory_delete', product_id=p['id']) }}" class="inline-form"
+              onsubmit="return confirm('Delete {{ p['name'] }}?');">
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+          <button type="submit" class="btn-danger btn-sm">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="empty-state">No products yet — add your first one above.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

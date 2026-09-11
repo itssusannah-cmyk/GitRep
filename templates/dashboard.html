@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Overview</h1>
+
+<div class="card-grid">
+  <div class="stat-card stat-blue">
+    <span class="stat-label">Inventory Value (cost)</span>
+    <span class="stat-value">{{ inv['cost_value'] | money }}</span>
+  </div>
+  <div class="stat-card stat-orange">
+    <span class="stat-label">Inventory Value (retail)</span>
+    <span class="stat-value">{{ inv['retail_value'] | money }}</span>
+  </div>
+  <div class="stat-card stat-blue">
+    <span class="stat-label">Lifetime Revenue</span>
+    <span class="stat-value">{{ summary['revenue'] | money }}</span>
+  </div>
+  <div class="stat-card {{ 'stat-red' if summary['profit'] < 0 else 'stat-green' }}">
+    <span class="stat-label">Lifetime Profit</span>
+    <span class="stat-value">{{ summary['profit'] | money }}</span>
+  </div>
+  <div class="stat-card {{ 'stat-orange' if low_stock|length else 'stat-neutral' }}">
+    <span class="stat-label">Low Stock Items</span>
+    <span class="stat-value">{{ low_stock|length }}</span>
+  </div>
+</div>
+
+<h2>Low Stock Alerts</h2>
+{% if low_stock %}
+<div class="table-wrap">
+<table class="data-table">
+  <thead><tr><th>Product</th><th>Category</th><th class="num">In Stock</th><th class="num">Reorder Level</th></tr></thead>
+  <tbody>
+    {% for p in low_stock %}
+    <tr>
+      <td>{{ p['name'] }}</td>
+      <td>{{ p['category'] }}</td>
+      <td class="num">{{ p['quantity'] }}</td>
+      <td class="num">{{ p['reorder_level'] }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="empty-state">Nothing is low on stock right now.</p>
+{% endif %}
+{% endblock %}

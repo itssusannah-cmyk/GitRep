@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Reports</h1>
+
+<form method="get" class="report-filter">
+  <label>From <input type="date" name="start" value="{{ start }}"></label>
+  <label>To <input type="date" name="end" value="{{ end }}"></label>
+  <button type="submit" class="btn-secondary">Generate Report</button>
+  <a href="{{ url_for('reports_export_csv', start=start, end=end) }}" class="btn-secondary">Export CSV</a>
+  <a href="{{ url_for('reports_export_xlsx', start=start, end=end) }}" class="btn-secondary">Export Excel</a>
+</form>
+
+<div class="card-grid">
+  <div class="stat-card stat-blue">
+    <span class="stat-label">Revenue</span>
+    <span class="stat-value">{{ summary['revenue'] | money }}</span>
+  </div>
+  <div class="stat-card stat-orange">
+    <span class="stat-label">Cost of Goods Sold</span>
+    <span class="stat-value">{{ summary['cost'] | money }}</span>
+  </div>
+  <div class="stat-card {{ 'stat-red' if summary['profit'] < 0 else 'stat-green' }}">
+    <span class="stat-label">{{ 'Loss' if summary['profit'] < 0 else 'Profit' }}</span>
+    <span class="stat-value">{{ (summary['profit'] | abs) | money }}</span>
+  </div>
+  <div class="stat-card stat-neutral">
+    <span class="stat-label">Units Sold</span>
+    <span class="stat-value">{{ summary['units_sold'] }}</span>
+  </div>
+</div>
+
+<h2>Profit Trend (last 14 days with sales)</h2>
+{% if trend %}
+<div class="chart-wrap">
+  <canvas id="profitChart" height="90"></canvas>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const labels = {{ trend | map(attribute='d') | list | tojson }};
+  const profits = {{ trend | map(attribute='profit') | list | tojson }};
+  const canvas = document.getElementById('profitChart');
+  if (window.Chart) {
+    new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Daily Profit',
+          data: profits,
+          borderColor: '#1D5C8A',
+          backgroundColor: 'rgba(222, 123, 51, 0.15)',
+          pointBackgroundColor: '#DE7B33',
+          pointBorderColor: '#1D5C8A',
+          tension: 0.25,
+          fill: true,
+          pointRadius: 3,
+        }]
+      },
+      options: { plugins: { legend: { display: false } }, responsive: true }
+    });
+  } else {
+    canvas.replaceWith(Object.assign(document.createElement('p'), {
+      className: 'empty-state',
+      textContent: 'Chart library did not load (no internet access?). Figures are still shown above.'
+    }));
+  }
+</script>
+{% else %}
+<p class="empty-state">No sales recorded yet — the trend chart will appear here once you make some sales.</p>
+{% endif %}
+{% endblock %}

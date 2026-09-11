@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Settings</h1>
+
+<section class="panel">
+  <h2>Business Profile</h2>
+  <form method="post" action="{{ url_for('settings_business') }}" class="grid-form">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+    <label>Business Name<input type="text" name="business_name" value="{{ settings['business_name'] }}" required></label>
+    <label>Phone<input type="text" name="phone" value="{{ settings['phone'] }}"></label>
+    <label>Email<input type="email" name="email" value="{{ settings['email'] }}"></label>
+    <label>Address<input type="text" name="address" value="{{ settings['address'] }}"></label>
+    <label>Currency Symbol<input type="text" name="currency_symbol" value="{{ settings['currency_symbol'] }}" required></label>
+    <label>Receipt Footer Note<input type="text" name="receipt_footer" value="{{ settings['receipt_footer'] }}"></label>
+    <button type="submit" class="btn-primary">Save Business Settings</button>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>Change My Password</h2>
+  <form method="post" action="{{ url_for('settings_password') }}" class="grid-form">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+    <label>New Password<input type="password" name="new_password" required></label>
+    <label>Confirm<input type="password" name="confirm_password" required></label>
+    <button type="submit" class="btn-primary">Update Password</button>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>User Accounts</h2>
+  <div class="table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr><th>Username</th><th>Role</th><th>Created</th>{% if logged_in_user['role'] == 'admin' %}<th></th>{% endif %}</tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>{{ u['username'] }}</td>
+        <td>{{ u['role'] }}</td>
+        <td>{{ u['created_at'] }}</td>
+        {% if logged_in_user['role'] == 'admin' %}
+        <td>
+          <form method="post" action="{{ url_for('settings_delete_user', user_id=u['id']) }}" class="inline-form"
+                onsubmit="return confirm('Delete user {{ u['username'] }}?');">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="btn-danger btn-sm">Delete</button>
+          </form>
+        </td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+
+  {% if logged_in_user['role'] == 'admin' %}
+  <details class="add-panel">
+    <summary>+ Add User</summary>
+    <form method="post" action="{{ url_for('settings_add_user') }}" class="grid-form">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+      <label>Username<input type="text" name="username" required></label>
+      <label>Password<input type="password" name="password" required></label>
+      <label>Role
+        <select name="role">
+          <option value="staff">staff</option>
+          <option value="admin">admin</option>
+        </select>
+      </label>
+      <button type="submit" class="btn-primary">Add User</button>
+    </form>
+  </details>
+  {% else %}
+  <p class="empty-state">Only admins can manage user accounts.</p>
+  {% endif %}
+</section>
+{% endblock %}

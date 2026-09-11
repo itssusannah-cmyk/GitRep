@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-card">
+  <h1>{{ business_name }}</h1>
+  <form method="post">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+    <label>Username
+      <input type="text" name="username" required autofocus>
+    </label>
+    <label>Password
+      <input type="password" name="password" required>
+    </label>
+    <button type="submit" class="btn-primary btn-block">Log In</button>
+  </form>
+</div>
+{% endblock %}
