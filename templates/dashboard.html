@@ -45,4 +45,10 @@
 {% else %}
 <p class="empty-state">Nothing is low on stock right now.</p>
 {% endif %}
+<script>
+  // Refreshes the page every 30 seconds
+  setInterval(function() {
+      window.location.reload();
+  }, 30000);
+</script>
 {% endblock %}
