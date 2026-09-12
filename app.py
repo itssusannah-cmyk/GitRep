@@ -1,15 +1,6 @@
 """
 app.py
-Web version of Retail Shop Manager.
-
-Reuses database.py completely unchanged — the desktop (Tkinter) and web
-(Flask) front ends share the exact same data layer, login logic, and
-business rules. Only the interface differs.
-
-Run:
-    python3 app.py
-Then, from any device on the same network, open:
-    http://<this-computer's-IP>:5000
+Web version of Retail Shop Manager updated for Render & Supabase deployment.
 """
 
 import os
@@ -24,7 +15,7 @@ from flask import (
     session, flash, Response, send_file, abort,
 )
 
-from database import Database, _app_data_dir
+from database import Database
 
 try:
     from openpyxl import Workbook
@@ -36,26 +27,25 @@ except ImportError:
 
 
 # ---------------------------------------------------------------------------
-# App setup
+# App setup & Database URL configuration
 # ---------------------------------------------------------------------------
-def _get_or_create_secret_key():
-    """Flask needs a secret key to cryptographically sign session cookies
-    (that's what keeps a user's login and CSRF token tamper-proof). We
-    generate one on first run and persist it — otherwise a server restart
-    would invalidate everyone's session, logging every device out."""
-    path = os.path.join(_app_data_dir(), "secret_key.txt")
-    if os.path.exists(path):
-        with open(path, "r") as f:
-            return f.read().strip()
-    key = secrets.token_hex(32)
-    with open(path, "w") as f:
-        f.write(key)
-    return key
-
-
 app = Flask(__name__)
-app.secret_key = _get_or_create_secret_key()
-db = Database()
+
+# Fetch database URI from Render environment variables
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+# SQLAlchemy/psycopg2 requires 'postgresql://' instead of 'postgres://'
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Fallback Secret Key logic for cloud ephemeral filesystems
+app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
+
+# Pass the dynamic database URL into your Database layer
+db = Database(db_url=DATABASE_URL)
 
 
 def money(value):
@@ -77,7 +67,7 @@ def current_user():
     if not user_id:
         return None
     cur = db.conn.cursor()
-    cur.execute("SELECT * FROM users WHERE id=?", (user_id,))
+    cur.execute("SELECT * FROM users WHERE id=%s", (user_id,))
     return cur.fetchone()
 
 
@@ -114,11 +104,6 @@ def inject_globals():
 
 @app.before_request
 def csrf_protect():
-    """Every device that can reach this app over the network can also send
-    it a forged request from another site (Cross-Site Request Forgery)
-    unless we check for a per-session token on anything that changes data.
-    The token itself rides inside Flask's signed session cookie, so a page
-    from elsewhere on the internet can't guess or forge it."""
     if "_csrf_token" not in session:
         session["_csrf_token"] = secrets.token_hex(16)
     if request.method == "POST":
@@ -467,7 +452,4 @@ def settings_delete_user(user_id):
 
 
 if __name__ == "__main__":
-    # host="0.0.0.0" makes this reachable from other devices on the same
-    # network (phones, tablets, other PCs) — not just this machine.
-    # See README.md for exposing this beyond the local network.
     app.run(host="0.0.0.0", port=5000, debug=False)
